@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "371999950291",
+    "project_id": "emergency-gps-dd774",
+    "storage_bucket": "emergency-gps-dd774.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:371999950291:android:6d8a41b4d1aa7fa4fcdb26",
+        "android_client_info": {
+          "package_name": "com.carleton.emergencyGPS"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqfv8PZ9TCH_nO1fppfPZQp0zrRcs_XSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
