@@ -1,4 +1,4 @@
-# tinyGPS.io
+# tinyGPS.ino
 ## Connections
 - Arduino Pin 2 RX -> CAM M8C TX
 - Arduino Pin 3 TX -> CAM M8C RX
