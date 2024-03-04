@@ -46,8 +46,6 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart4;
-UART_HandleTypeDef huart5;
-UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
@@ -58,10 +56,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_LPUART1_UART_Init(void);
 static void MX_UART4_Init(void);
-static void MX_UART5_Init(void);
-static void MX_USART2_UART_Init(void);
 void MX_USB_HOST_Process(void);
-void HAL_UART_Print(UART_HandleTypeDef *huart, uint8_t *data);
 
 /* USER CODE BEGIN PFP */
 
@@ -107,42 +102,48 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_USB_HOST_Init();
   MX_UART4_Init();
-  MX_UART5_Init();
-  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  GNSS_Init(&GNSS_Handle, &huart4);
+  HAL_UART_IRQHandler(&huart4);
+  // GNSS_Init(&GNSS_Handle, &huart4);
   HAL_Delay(1000);
-  GNSS_LoadConfig(&GNSS_Handle);
-  /* USER CODE END 2 */
+  // GNSS_LoadConfig(&GNSS_Handle);
   uint8_t txData[] = "Hello, UART4!\r\n";
-  uint8_t rxData[15];
+  uint8_t rxData[5];
+  /* USER CODE END 2 */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 
     /* USER CODE END WHILE */
-
     MX_USB_HOST_Process();
 
-	HAL_Delay(1000);
-	// Transmit data
-	printf("sending message to uart4\n");
-	HAL_StatusTypeDef res = HAL_UART_Transmit(&huart4, txData, sizeof(txData) - 1, 10000);
-	// Receive data
-	printf("Attempting to receive from uart4 %d\n", res);
-	HAL_StatusTypeDef res2 = HAL_UART_Receive(&huart4, rxData, sizeof(rxData) - 1, 10000);
-	printf("res after receive %d \n", res2);
-	HAL_UART_Print(&huart4, rxData);
-//	GNSS_GetPOSLLHData(&GNSS_Handle);
-//	GNSS_GetPVTData(&GNSS_Handle);
-	GNSS_GetNavigatorData(&GNSS_Handle);
-	GNSS_ParseBuffer(&GNSS_Handle);
-	printf("Day: %d-%d-%d \r\n", GNSS_Handle.day, GNSS_Handle.month,GNSS_Handle.year);
-	printf("Latitude: %f \r\n", GNSS_Handle.fLat);
-	printf("Longitude: %f \r\n\n",(float) GNSS_Handle.lon / 10000000.0);
-
     /* USER CODE BEGIN 3 */
+    // Transmit data
+	printf("sending message to uart4\r\n");
+	printf("Transmit data: %s\r\n", txData);
+	if (HAL_UART_Transmit(&huart4, txData, sizeof(txData) - 1, HAL_MAX_DELAY) == HAL_OK) {
+		printf("Transmitted data\r\n");
+	} else {
+		printf("Transmit Error\r\n");
+	}
+	HAL_Delay(1000);
+	// Receive data
+	if (HAL_UART_Receive(&huart4, rxData, sizeof(rxData) - 1, HAL_MAX_DELAY) == HAL_OK) {
+		printf("Received data: %s\r\n", rxData);
+	} else {
+		printf("Receive error\r\n");
+	}
+	HAL_Delay(1000);
+	HAL_UART_Print(&huart4, rxData);
+	printf("Received data: %s\r\n", rxData);
+	// TODO:
+//	GNSS_GetNavigatorData(&GNSS_Handle);
+//	GNSS_ParseBuffer(&GNSS_Handle);
+//	printf("Day: %d-%d-%d \r\n", GNSS_Handle.day, GNSS_Handle.month,GNSS_Handle.year);
+//	printf("Latitude: %f \r\n", GNSS_Handle.fLat);
+//	printf("Longitude: %f \r\n\n",(float) GNSS_Handle.lon / 10000000.0);
   }
   /* USER CODE END 3 */
 }
@@ -277,76 +278,6 @@ static void MX_UART4_Init(void)
 }
 
 /**
-  * @brief UART5 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_UART5_Init(void)
-{
-
-  /* USER CODE BEGIN UART5_Init 0 */
-
-  /* USER CODE END UART5_Init 0 */
-
-  /* USER CODE BEGIN UART5_Init 1 */
-
-  /* USER CODE END UART5_Init 1 */
-  huart5.Instance = UART5;
-  huart5.Init.BaudRate = 115200;
-  huart5.Init.WordLength = UART_WORDLENGTH_8B;
-  huart5.Init.StopBits = UART_STOPBITS_1;
-  huart5.Init.Parity = UART_PARITY_NONE;
-  huart5.Init.Mode = UART_MODE_TX_RX;
-  huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart5.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart5.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_RS485Ex_Init(&huart5, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN UART5_Init 2 */
-
-  /* USER CODE END UART5_Init 2 */
-
-}
-
-/**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -355,6 +286,17 @@ static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
+
+  /*UART 4*/
+
+//    GPIO_InitStruct.Pin = GPIO_PIN_0; // UART4_TX
+//	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+//	GPIO_InitStruct.Pull = GPIO_NOPULL;
+//	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//	GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//	GPIO_InitStruct.Pin = GPIO_PIN_1; // UART4_RX
+//	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
@@ -364,14 +306,12 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
   HAL_PWREx_EnableVddIO2();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LD3_Pin|LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, USB_PowerSwitchOn_Pin|SMPS_V1_Pin|SMPS_EN_Pin|SMPS_SW_Pin, GPIO_PIN_RESET);
-
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
