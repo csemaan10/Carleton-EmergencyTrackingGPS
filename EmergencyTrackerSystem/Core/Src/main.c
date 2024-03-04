@@ -25,6 +25,7 @@
 #include "stm32l4xx_hal.h"
 #include "stdio.h"
 #include <string.h>
+#include "GNSS.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,7 +61,7 @@ static void MX_UART4_Init(void);
 static void MX_UART5_Init(void);
 static void MX_USART2_UART_Init(void);
 void MX_USB_HOST_Process(void);
-
+void HAL_UART_Print(UART_HandleTypeDef *huart, uint8_t *data);
 
 /* USER CODE BEGIN PFP */
 
@@ -68,25 +69,11 @@ void MX_USB_HOST_Process(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+GNSS_StateHandle GNSS_Handle;
 
-void GPS_UART_SendString(const char *str) {
-  HAL_UART_Transmit(&huart4, (uint8_t *)str, strlen(str), HAL_MAX_DELAY);
+void HAL_UART_Print(UART_HandleTypeDef *huart, uint8_t *data) {
+  HAL_UART_Transmit(huart, data, strlen((char *)data), HAL_MAX_DELAY);
 }
-
-void GPS_UART_ReceiveString(char *buffer, uint16_t size) {
-	printf("Receive function\n");
-  HAL_UART_Receive(&huart4, (uint8_t *)buffer, size, HAL_MAX_DELAY);
-}
-
-void GPS_SendATCommand(const char *command) {
-  GPS_UART_SendString(command);
-  GPS_UART_SendString("\r\n");
-}
-
-void GPS_ReceiveResponse(char *response, uint16_t size) {
-  GPS_UART_ReceiveString(response, size);
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -123,35 +110,39 @@ int main(void)
   MX_UART5_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  char response[256];
-  // Send Configuration Commands
-  GPS_SendATCommand("PUBX,41,1,0007,0003,9600,0");
+  GNSS_Init(&GNSS_Handle, &huart4);
   HAL_Delay(1000);
-//  GPS_SendATCommand("PUBX,40,GLL,0,0,0,0,0");
-//  HAL_Delay(1000);
-//  GPS_SendATCommand("PUBX,40,GGA,0,0,0,0,0");
-//  HAL_Delay(1000);
-//  GPS_SendATCommand("PUBX,40,RMC,0,0,0,0,0");
-//  HAL_Delay(1000);
-
+  GNSS_LoadConfig(&GNSS_Handle);
   /* USER CODE END 2 */
-
+  uint8_t txData[] = "Hello, UART4!\r\n";
+  uint8_t rxData[15];
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  printf("Hello World \n");
+
     /* USER CODE END WHILE */
+
     MX_USB_HOST_Process();
 
+	HAL_Delay(1000);
+	// Transmit data
+	printf("sending message to uart4\n");
+	HAL_StatusTypeDef res = HAL_UART_Transmit(&huart4, txData, sizeof(txData) - 1, 10000);
+	// Receive data
+	printf("Attempting to receive from uart4 %d\n", res);
+	HAL_StatusTypeDef res2 = HAL_UART_Receive(&huart4, rxData, sizeof(rxData) - 1, 10000);
+	printf("res after receive %d \n", res2);
+	HAL_UART_Print(&huart4, rxData);
+//	GNSS_GetPOSLLHData(&GNSS_Handle);
+//	GNSS_GetPVTData(&GNSS_Handle);
+	GNSS_GetNavigatorData(&GNSS_Handle);
+	GNSS_ParseBuffer(&GNSS_Handle);
+	printf("Day: %d-%d-%d \r\n", GNSS_Handle.day, GNSS_Handle.month,GNSS_Handle.year);
+	printf("Latitude: %f \r\n", GNSS_Handle.fLat);
+	printf("Longitude: %f \r\n\n",(float) GNSS_Handle.lon / 10000000.0);
+
     /* USER CODE BEGIN 3 */
-    GPS_SendATCommand("PUBX,00");
-    printf("Sent command \n");
-    HAL_Delay(1000);
-    printf("Trying to receive something \n");
-    GPS_ReceiveResponse(response, sizeof(response));
-    printf("Received response: %s \n", response);
-    HAL_Delay(5000);
   }
   /* USER CODE END 3 */
 }
@@ -381,6 +372,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, USB_PowerSwitchOn_Pin|SMPS_V1_Pin|SMPS_EN_Pin|SMPS_SW_Pin, GPIO_PIN_RESET);
 
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
@@ -412,7 +404,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-_write(int file, char *ptr, int len)
+int _write(int file, char *ptr, int len)
 {
   (void)file;
   int DataIdx;
