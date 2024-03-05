@@ -65,9 +65,58 @@ void MX_USB_HOST_Process(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 GNSS_StateHandle GNSS_Handle;
-
+char gpsBuffer[256];  // Buffer to store incoming GPS data
+char latitude[12], longitude[12];  // Buffers to store latitude and longitude
 void HAL_UART_Print(UART_HandleTypeDef *huart, uint8_t *data) {
   HAL_UART_Transmit(huart, data, strlen((char *)data), HAL_MAX_DELAY);
+}
+
+void parseGPSData(char *data) {
+	 char sentenceType[6];  // Buffer to store the sentence type (e.g., GPGGA)
+	    float latitudeValue, longitudeValue;
+	    char latDirection, lonDirection;
+
+	    // Parse the sentence type
+	    if (sscanf(data, "$%5[^,],", sentenceType) == 1) {
+	        if (strcmp(sentenceType, "GPGGA") == 0) {
+	            // Parse GPGGA sentence
+	            if (sscanf(data, "$GPGGA,%f,%f,%c,%f,%c", &latitudeValue, &longitudeValue, &latDirection, &longitudeValue, &lonDirection) == 5) {
+	                // Print the parsed data
+	                printf("Latitude: %.4f %c\n", latitudeValue, latDirection);
+	                printf("Longitude: %.4f %c\n", longitudeValue, lonDirection);
+	            } else {
+	                printf("Failed to parse GPGGA sentence\n");
+	            }
+	        } else {
+	            printf("Unsupported sentence type: %s\n", sentenceType);
+	        }
+	    } else {
+	        printf("Failed to extract sentence type\n");
+	    }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == UART4) {
+    	if (huart->ErrorCode == HAL_UART_ERROR_ORE) {
+			printf("[ERROR] something went wrong\n");
+			__HAL_UART_CLEAR_OREFLAG(&huart4);
+			HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1);
+			return;
+		}
+        static uint8_t dataIndex = 0;
+        if (dataIndex < sizeof(gpsBuffer) - 1) {
+            gpsBuffer[dataIndex++] = huart->Instance->RDR;
+            if (huart->Instance->RDR == '\n') {
+                gpsBuffer[dataIndex] = '\0';
+                parseGPSData(gpsBuffer);
+                dataIndex = 0;
+            }
+        }
+
+        HAL_StatusTypeDef res = HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1);
+        printf("Hello: %d\n", dataIndex);
+        printf("res in second callback uart4 receive: %d\n", res);
+    }
 }
 /* USER CODE END 0 */
 
@@ -103,23 +152,24 @@ int main(void)
   MX_USB_HOST_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_IRQHandler(&huart4);
-  GNSS_Init(&GNSS_Handle, &huart4);
+  // HAL_UART_IRQHandler(&huart4);
+  // GNSS_Init(&GNSS_Handle, &huart4);
   HAL_Delay(1000);
-  GNSS_LoadConfig(&GNSS_Handle);
+  // GNSS_LoadConfig(&GNSS_Handle);
 	//  uint8_t txData[] = "Hello, UART4!\r\n";
 	//  uint8_t rxData[5];
-
+  // This is the destination buffer where the received data will be stored. In this case, it's the Receive Data Register
+  // HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1);
+  HAL_StatusTypeDef res = HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1);
+  printf("res in first uart4 receive: %d", res);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
-
     /* USER CODE BEGIN 3 */
 
     // Transmit data
@@ -141,12 +191,11 @@ int main(void)
 //	HAL_UART_Print(&huart4, rxData);
 //	printf("Received data: %s\r\n", rxData);
 	// TODO:
-	GNSS_GetNavigatorData(&GNSS_Handle);
-	GNSS_ParseBuffer(&GNSS_Handle);
-	printf("Day: %d-%d-%d \r\n", GNSS_Handle.day, GNSS_Handle.month, GNSS_Handle.year);
-	printf("Latitude: %f \r\n", GNSS_Handle.fLat);
-	printf("Longitude: %f \r\n\n",(float) GNSS_Handle.lon / 10000000.0);
-	HAL_Delay(3000);
+//	GNSS_GetNavigatorData(&GNSS_Handle);
+//	GNSS_ParseBuffer(&GNSS_Handle);
+//	printf("Day: %d-%d-%d \r\n", GNSS_Handle.day, GNSS_Handle.month, GNSS_Handle.year);
+//	printf("Latitude: %f \r\n", GNSS_Handle.fLat);
+//	printf("Longitude: %f \r\n\n",(float) GNSS_Handle.lon / 10000000.0);
   }
   /* USER CODE END 3 */
 }
