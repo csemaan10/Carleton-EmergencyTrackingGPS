@@ -104,11 +104,12 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_IRQHandler(&huart4);
-  // GNSS_Init(&GNSS_Handle, &huart4);
+  GNSS_Init(&GNSS_Handle, &huart4);
   HAL_Delay(1000);
-  // GNSS_LoadConfig(&GNSS_Handle);
-  uint8_t txData[] = "Hello, UART4!\r\n";
-  uint8_t rxData[5];
+  GNSS_LoadConfig(&GNSS_Handle);
+	//  uint8_t txData[] = "Hello, UART4!\r\n";
+	//  uint8_t rxData[5];
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -120,30 +121,32 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+
     // Transmit data
-	printf("sending message to uart4\r\n");
-	printf("Transmit data: %s\r\n", txData);
-	if (HAL_UART_Transmit(&huart4, txData, sizeof(txData) - 1, HAL_MAX_DELAY) == HAL_OK) {
-		printf("Transmitted data\r\n");
-	} else {
-		printf("Transmit Error\r\n");
-	}
-	HAL_Delay(1000);
-	// Receive data
-	if (HAL_UART_Receive(&huart4, rxData, sizeof(rxData) - 1, HAL_MAX_DELAY) == HAL_OK) {
-		printf("Received data: %s\r\n", rxData);
-	} else {
-		printf("Receive error\r\n");
-	}
-	HAL_Delay(1000);
-	HAL_UART_Print(&huart4, rxData);
-	printf("Received data: %s\r\n", rxData);
+//	printf("sending message to uart4\r\n");
+//	printf("Transmit data: %s\r\n", txData);
+//	if (HAL_UART_Transmit(&huart4, txData, sizeof(txData) - 1, HAL_MAX_DELAY) == HAL_OK) {
+//		printf("Transmitted data\r\n");
+//	} else {
+//		printf("Transmit Error\r\n");
+//	}
+//	HAL_Delay(1000);
+//	// Receive data
+//	if (HAL_UART_Receive(&huart4, rxData, sizeof(rxData) - 1, HAL_MAX_DELAY) == HAL_OK) {
+//		printf("Received data \r\n");
+//	} else {
+//		printf("Receive error\r\n");
+//	}
+//	HAL_Delay(1000);
+//	HAL_UART_Print(&huart4, rxData);
+//	printf("Received data: %s\r\n", rxData);
 	// TODO:
-//	GNSS_GetNavigatorData(&GNSS_Handle);
-//	GNSS_ParseBuffer(&GNSS_Handle);
-//	printf("Day: %d-%d-%d \r\n", GNSS_Handle.day, GNSS_Handle.month,GNSS_Handle.year);
-//	printf("Latitude: %f \r\n", GNSS_Handle.fLat);
-//	printf("Longitude: %f \r\n\n",(float) GNSS_Handle.lon / 10000000.0);
+	GNSS_GetNavigatorData(&GNSS_Handle);
+	GNSS_ParseBuffer(&GNSS_Handle);
+	printf("Day: %d-%d-%d \r\n", GNSS_Handle.day, GNSS_Handle.month, GNSS_Handle.year);
+	printf("Latitude: %f \r\n", GNSS_Handle.fLat);
+	printf("Longitude: %f \r\n\n",(float) GNSS_Handle.lon / 10000000.0);
+	HAL_Delay(3000);
   }
   /* USER CODE END 3 */
 }

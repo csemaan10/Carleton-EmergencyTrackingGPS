@@ -110,11 +110,17 @@ void GNSS_GetUniqID(GNSS_StateHandle *GNSS) {
  * @param GNSS Pointer to main GNSS structure.
  */
 void GNSS_GetNavigatorData(GNSS_StateHandle *GNSS) {
-	HAL_UART_Transmit_DMA(GNSS->huart, getNavigatorData,
-			sizeof(getNavigatorData) / sizeof(uint8_t));
-	HAL_StatusTypeDef res = HAL_UART_Receive_IT(GNSS->huart, GNSS_Handle.uartWorkingBuffer, 28);
-	if (res != HAL_OK) {
-		printf("[ERROR] issue in GNSS_GetNavigatorData() receive IT. Response: %s\n", getHalResponse(res));
+	if (HAL_UART_Transmit_DMA(GNSS->huart, getNavigatorData,
+			sizeof(getNavigatorData) / sizeof(uint8_t)) == HAL_OK) {
+		printf("[SUCCESS] GNSS_GetNavigatorData() success transmit\r\n");
+	} else {
+		printf("[ERROR] GNSS_GetNavigatorData() error transmit\r\n");
+	}
+
+	if (HAL_UART_Receive_IT(GNSS->huart, GNSS_Handle.uartWorkingBuffer, 28) == HAL_OK) {
+		printf("[SUCCESS] GNSS_GetNavigatorData() success receive\r\n");
+	} else {
+		printf("[ERROR] GNSS_GetNavigatorData() error receive\r\n");
 	}
 }
 
@@ -123,11 +129,18 @@ void GNSS_GetNavigatorData(GNSS_StateHandle *GNSS) {
  * @param GNSS Pointer to main GNSS structure.
  */
 void GNSS_GetPOSLLHData(GNSS_StateHandle *GNSS) {
-	HAL_UART_Transmit_DMA(GNSS->huart, getPOSLLHData,
-			sizeof(getPOSLLHData) / sizeof(uint8_t));
-	HAL_StatusTypeDef res = HAL_UART_Receive_IT(GNSS->huart, GNSS_Handle.uartWorkingBuffer, 36);
-	if (res != HAL_OK) {
-		printf("[ERROR] issue in GNSS_GetPOSLLHData() receive IT. Response: %s\n", getHalResponse(res));
+	if (HAL_UART_Transmit_DMA(GNSS->huart, getPOSLLHData,
+			sizeof(getPOSLLHData) / sizeof(uint8_t)) == HAL_OK) {
+		printf("[SUCCESS] GNSS_GetPOSLLHData() success transmit\r\n");
+	} else {
+		printf("[ERROR] GNSS_GetPOSLLHData() error transmit\r\n");
+	}
+
+
+	if (HAL_UART_Receive_IT(GNSS->huart, GNSS_Handle.uartWorkingBuffer, 36) == HAL_OK) {
+		printf("[SUCCESS] GNSS_GetPOSLLHData() success receive\r\n");
+	} else {
+		printf("[ERROR] GNSS_GetPOSLLHData() error receive\r\n");
 	}
 }
 
@@ -136,11 +149,17 @@ void GNSS_GetPOSLLHData(GNSS_StateHandle *GNSS) {
  * @param GNSS Pointer to main GNSS structure.
  */
 void GNSS_GetPVTData(GNSS_StateHandle *GNSS) {
-	HAL_UART_Transmit_DMA(GNSS->huart, getPVTData,
-			sizeof(getPVTData) / sizeof(uint8_t));
-	HAL_StatusTypeDef res = HAL_UART_Receive_IT(GNSS->huart, GNSS_Handle.uartWorkingBuffer, 100);
-	if (res != HAL_OK) {
-		printf("[ERROR] issue in GNSS_GetPVTData() receive IT. Response: %s\n", getHalResponse(res));
+	if (HAL_UART_Transmit_DMA(GNSS->huart, getPVTData,
+			sizeof(getPVTData) / sizeof(uint8_t)) == HAL_OK) {
+		printf("[SUCCESS] GNSS_GetPVTData() success transmit\r\n");
+	} else {
+		printf("[ERROR] GNSS_GetPVTData() error transmit\r\n");
+	}
+
+	if (HAL_UART_Receive_IT(GNSS->huart, GNSS_Handle.uartWorkingBuffer, 100) == HAL_OK) {
+		printf("[SUCCESS] GNSS_GetPVTData() success receive\r\n");
+	} else {
+		printf("[ERROR] GNSS_GetPVTData() error receive\r\n");
 	}
 }
 
@@ -161,9 +180,9 @@ void GNSS_ParseUniqID(GNSS_StateHandle *GNSS) {
  */
 void GNSS_SetMode(GNSS_StateHandle *GNSS, short gnssMode) {
 	if (gnssMode == 0) {
-		HAL_UART_Transmit_DMA(GNSS->huart, setPortableMode,sizeof(setPortableMode) / sizeof(uint8_t));
+		HAL_UART_Transmit_DMA(GNSS->huart, setPortableMode,sizeof(setPortableMode) / sizeof(uint8_t)) == HAL_OK ? printf("[SUCESS] Mode Set portable\r\n") : printf("[ERROR] setting mode Set portable\r\n");
 	} else if (gnssMode == 1) {
-		HAL_UART_Transmit_DMA(GNSS->huart, setStationaryMode,sizeof(setStationaryMode) / sizeof(uint8_t));
+		HAL_UART_Transmit_DMA(GNSS->huart, setStationaryMode,sizeof(setStationaryMode) / sizeof(uint8_t))== HAL_OK ? printf("[SUCESS] Mode Set Stationary Mode\r\n") : printf("[ERROR] setting mode to stationary mode\r\n");
 	} else if (gnssMode == 2) {
 		HAL_UART_Transmit_DMA(GNSS->huart, setPedestrianMode,sizeof(setPedestrianMode) / sizeof(uint8_t));
 	} else if (gnssMode == 3) {
@@ -306,14 +325,14 @@ void GNSS_ParsePOSLLHData(GNSS_StateHandle *GNSS) {
  */
 void GNSS_LoadConfig(GNSS_StateHandle *GNSS) {
 	HAL_UART_Transmit_DMA(GNSS->huart, configUBX,
-			sizeof(configUBX) / sizeof(uint8_t));
-	HAL_Delay(250);
+			sizeof(configUBX) / sizeof(uint8_t)) == HAL_OK ? printf("[SUCCESS] configured configUBX\r\n") : printf("[ERROR] in configuring configUBX\r\n");
+	HAL_Delay(3000);
 	HAL_UART_Transmit_DMA(GNSS->huart, setNMEA410,
-			sizeof(setNMEA410) / sizeof(uint8_t));
-	HAL_Delay(250);
+			sizeof(setNMEA410) / sizeof(uint8_t)) == HAL_OK ? printf("[SUCCESS] configured setNMEA410\r\n") : printf("[ERROR] in configuring setNMEA410\r\n");
+	HAL_Delay(3000);
 	HAL_UART_Transmit_DMA(GNSS->huart, setGNSS,
-			sizeof(setGNSS) / sizeof(uint8_t));
-	HAL_Delay(250);
+			sizeof(setGNSS) / sizeof(uint8_t)) == HAL_OK ? printf("[SUCCESS] configured setGNSS\r\n") : printf("[ERROR] in configuring setGNSS\r\n");
+	HAL_Delay(3000);
 }
 
 
