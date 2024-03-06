@@ -4,14 +4,14 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig: FirebaseOptions = {
-  apiKey: "AIzaSyDGz-kTz_EB7eDxMkyWiw6t2DIWcPDuWPA",
-  authDomain: "emergency-gps-dd774.firebaseapp.com",
-  databaseURL: "https://emergency-gps-dd774-default-rtdb.firebaseio.com",
-  projectId: "emergency-gps-dd774",
-  storageBucket: "emergency-gps-dd774.appspot.com",
-  messagingSenderId: "371999950291",
-  appId: "1:371999950291:web:6af95c756c5d7f20fcdb26",
-  measurementId: "G-6YVZWEDZ2D",
+  apiKey: "REACT_GPS_API_KEY",
+  authDomain: "REACT_APP_AUTH_DOMAIN",
+  databaseURL: "REACT_DATABASE_URL",
+  projectId: "REACT_PROJECT_ID",
+  storageBucket: "REACT_STORAGE_BUCKET",
+  messagingSenderId: "REACT_MESSAGING_SENDER_ID",
+  appId: "REACT_APP_ID",
+  measurementId: "REACT_MEASUREMENT_ID",
 };
 
 export const FIREBASE_APP = initializeApp(firebaseConfig);
