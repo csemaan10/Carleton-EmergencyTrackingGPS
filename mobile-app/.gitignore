@@ -18,3 +18,10 @@ web-build/
 
 expo-env.d.ts
 # @end expo-cli
+
+#misc
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
