@@ -61,32 +61,62 @@ static void MX_UART5_Init(void);
 static void MX_USART2_UART_Init(void);
 void MX_USB_HOST_Process(void);
 
-
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+char gpsBuffer[256];  // Buffer to store incoming GPS data
 
-void GPS_UART_SendString(const char *str) {
-  HAL_UART_Transmit(&huart4, (uint8_t *)str, strlen(str), HAL_MAX_DELAY);
+void parseGPSData(char *data) {
+	// Buffer to store the sentence type (e.g., GPGGA)
+	char sentenceType[6];
+	float latitudeValue, longitudeValue;
+	char latDirection, lonDirection;
+
+	// Parse the sentence type
+	if (sscanf(data, "$%5[^,],", sentenceType) == 1) {
+		if (strcmp(sentenceType, "GPGGA") == 0) {
+			// Parse GPGGA sentence
+			if (sscanf(data, "$GPGGA,%f,%f,%c,%f,%c", &latitudeValue, &longitudeValue, &latDirection, &longitudeValue, &lonDirection) == 5) {
+				printf("Latitude: %.4f %c\n", latitudeValue, latDirection);
+				printf("Longitude: %.4f %c\n", longitudeValue, lonDirection);
+			} else {
+				printf("[ERROR] Failed to parse GPGGA sentence\n");
+			}
+		} else {
+			printf("[ERROR] Unsupported sentence type: %s\n", sentenceType);
+		}
+	} else {
+		printf("[ERROR] Failed to extract sentence type\n");
+	}
 }
 
-void GPS_UART_ReceiveString(char *buffer, uint16_t size) {
-	printf("Receive function\n");
-  HAL_UART_Receive(&huart4, (uint8_t *)buffer, size, HAL_MAX_DELAY);
-}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == UART4) {
 
-void GPS_SendATCommand(const char *command) {
-  GPS_UART_SendString(command);
-  GPS_UART_SendString("\r\n");
-}
+    	if (huart->ErrorCode == HAL_UART_ERROR_ORE) {
+			printf("[ERROR] something went wrong\n");
+			__HAL_UART_CLEAR_OREFLAG(&huart4);
+			HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1);
+			return;
+		}
 
-void GPS_ReceiveResponse(char *response, uint16_t size) {
-  GPS_UART_ReceiveString(response, size);
-}
+        static uint8_t dataIndex = 0;
+        if (dataIndex < sizeof(gpsBuffer) - 1) {
+            gpsBuffer[dataIndex++] = huart->Instance->RDR;
+            if (huart->Instance->RDR == '\n') {
+                gpsBuffer[dataIndex] = '\0';
+                parseGPSData(gpsBuffer);
+                dataIndex = 0;
+            }
+        }
 
+        // continue to receive from urart 4 untill 225 bytes are receive
+        HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1);
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -123,35 +153,18 @@ int main(void)
   MX_UART5_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  char response[256];
-  // Send Configuration Commands
-  GPS_SendATCommand("PUBX,41,1,0007,0003,9600,0");
-  HAL_Delay(1000);
-//  GPS_SendATCommand("PUBX,40,GLL,0,0,0,0,0");
-//  HAL_Delay(1000);
-//  GPS_SendATCommand("PUBX,40,GGA,0,0,0,0,0");
-//  HAL_Delay(1000);
-//  GPS_SendATCommand("PUBX,40,RMC,0,0,0,0,0");
-//  HAL_Delay(1000);
 
+  HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1); // initalize the receive for the gps signal
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  printf("Hello World \n");
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-    GPS_SendATCommand("PUBX,00");
-    printf("Sent command \n");
-    HAL_Delay(1000);
-    printf("Trying to receive something \n");
-    GPS_ReceiveResponse(response, sizeof(response));
-    printf("Received response: %s \n", response);
-    HAL_Delay(5000);
   }
   /* USER CODE END 3 */
 }
@@ -301,7 +314,7 @@ static void MX_UART5_Init(void)
 
   /* USER CODE END UART5_Init 1 */
   huart5.Instance = UART5;
-  huart5.Init.BaudRate = 115200;
+  huart5.Init.BaudRate = 9600;
   huart5.Init.WordLength = UART_WORDLENGTH_8B;
   huart5.Init.StopBits = UART_STOPBITS_1;
   huart5.Init.Parity = UART_PARITY_NONE;
@@ -336,7 +349,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -364,7 +377,6 @@ static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -412,7 +424,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-_write(int file, char *ptr, int len)
+int _write(int file, char *ptr, int len)
 {
   (void)file;
   int DataIdx;
