@@ -67,7 +67,16 @@ void MX_USB_HOST_Process(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+typedef enum
+{
+  SLEEP       	= 0x00,
+  BLUETOOTH    	= 0x01,
+  GPS     		= 0x02,
+  ALL  			= 0x03
+} TrackerModes;
+
 char gpsBuffer[256];  // Buffer to store incoming GPS data
+TrackerModes mode = BLUETOOTH;
 
 void parseGPSData(char *data) {
 	// Buffer to store the sentence type (e.g., GPGGA)
@@ -154,7 +163,17 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1); // initalize the receive for the gps signal
+  if (mode == GPS) {
+	  HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1); // initalize the receive for the gps signal
+  } else if (mode == BLUETOOTH) {
+//	  char* message = "Hello\r\n";
+//	  if (HAL_UART_Transmit(&huart2, (uint8_t*) message, sizeof(message) - 1, HAL_MAX_DELAY) == HAL_OK) {
+//		  printf("Bluetooth Transmit okay! %s \n", message);
+//	  } else {
+//		  printf("Bluetooth transmit bad \n");
+//	  }
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -165,6 +184,15 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+    if (mode == BLUETOOTH) {
+		  char* message = "Hello\r\n";
+		  if (HAL_UART_Transmit(&huart2, "NewMessage\n", 35, HAL_MAX_DELAY) == HAL_OK) {
+			  printf("Bluetooth Transmit okay! %s \n", "NewMessage");
+		  } else {
+			  printf("Bluetooth transmit bad \n");
+		  }
+	  }
+    HAL_Delay(3000);
   }
   /* USER CODE END 3 */
 }
