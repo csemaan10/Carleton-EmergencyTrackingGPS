@@ -194,8 +194,8 @@ int main(void)
 			  printf("Bluetooth transmit bad \n");
 			}
 
-//			HAL_StatusTypeDef res = HAL_UART_Receive_IT(&huart2, messageReceived, MAX_BLE_RX_MSG_LENGTH);
-//			printf("Receive Code: %d\n", res);
+	//			HAL_StatusTypeDef res = HAL_UART_Receive_IT(&huart2, messageReceived, MAX_BLE_RX_MSG_LENGTH);
+	//			printf("Receive Code: %d\n", res);
 		}
 
 

@@ -16,6 +16,18 @@ BLEScan* pBLEScan;
 #define TXD_PIN (GPIO_NUM_17)
 #define RXD_PIN (GPIO_NUM_16)
 
+const int MAX_DEVICES = 10; // Maximum number of devices to track
+const int RSSI_THRESHOLD = -70; // Adjust as needed based on signal strength
+
+struct Device {
+  String address;
+  int rssi;
+};
+
+Device devices[MAX_DEVICES];
+int numDevices = 0;
+int isBLEScan = 0;
+
 void setup() {
   Serial.begin(9600);
   // initialize uart2 port with esp32 and stm32
@@ -50,37 +62,68 @@ void setup() {
 
   // Add the characteristic to the service
   pService->addCharacteristic(pCharacteristic);
+
   // Start the service
   pService->start();
 }
 
 void loop() {
   // Read data from UART.
-  const uart_port_t uart_num = UART_NUM_2;
-  uint8_t data[128];
-  int length = 0;
-  ESP_ERROR_CHECK(uart_get_buffered_data_len(uart_num, (size_t*)&length));
-  length = uart_read_bytes(uart_num, data, length, 100);
-  if (length > 0) {
-      String command = (char*) data;
-      command.trim();
-      command.replace("\r", "");
-      command.replace("\n", "");
-      Serial.println(command);
+  if (isBLEScan == 0) {
+    const uart_port_t uart_num = UART_NUM_2;
+    uint8_t data[128];
+    int length = 0;
+    ESP_ERROR_CHECK(uart_get_buffered_data_len(uart_num, (size_t*)&length));
+    length = uart_read_bytes(uart_num, data, length, 100);
+    if (length > 0) {
+        String command = (char*) data;
+        command.trim();
+        command.replace("\r", "");
+        command.replace("\n", "");
+        Serial.println(command);
 
-      // Send back a message
-      if (command.equals("AT+BT=ON")) {
-        Serial.println("Command valid");
-        enableBluetooth();      
-      }
+        // Send back a message
+        if (command.equals("AT+BT=ON")) {
+          Serial.println("Command valid");
+          isBLEScan = 1;
+          enableBluetooth();      
+        }
+    }
+  }
+  checkProximity();
+}
+
+void checkProximity() {
+  for (int i = 0; i < numDevices; i++) {
+      Serial.print("Phone detected: ");
+      Serial.print(devices[i].address);
+      Serial.print(", RSSI: ");
+      Serial.println(devices[i].rssi);
   }
 }
+
+class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
+  void onResult(BLEAdvertisedDevice advertisedDevice) {
+    Serial.println("On result callback()");
+    // strong signal with a ble device
+    if (advertisedDevice.haveRSSI()) {
+      Serial.println("Valid RSSI");
+      if (numDevices < MAX_DEVICES) {
+        std::string stdAddress = advertisedDevice.getAddress().toString();
+        devices[numDevices].address = String(stdAddress.c_str()); // Convert std::string to String
+        devices[numDevices].rssi = advertisedDevice.getRSSI();
+        numDevices++;
+        Serial.println(numDevices);
+      }
+    }
+  }
+};
 
 void enableBluetooth() {
   BLEDevice::startAdvertising();
   Serial.println("Bluetooth is ON.");
   pBLEScan = BLEDevice::getScan();
+  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
   pBLEScan->setActiveScan(true);
   pBLEScan->start(0);
 }
-
