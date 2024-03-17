@@ -6,13 +6,15 @@
 #include "driver/uart.h"
 #include "string.h"
 #include "driver/gpio.h"
-// #include <BLEDevice.h>
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEScan.h>
 
-// BLEServer *pServer;
+BLEServer *pServer;
+BLEScan* pBLEScan;
+
 #define TXD_PIN (GPIO_NUM_17)
 #define RXD_PIN (GPIO_NUM_16)
-
-int commandReceived = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -36,28 +38,20 @@ void setup() {
                                       uart_buffer_size, 10, &uart_queue, 0));
 
   // initialize bluetooth mapping
-  // BLEDevice::init("AIRTAGDUPE");
-  // pServer = BLEDevice::createServer();
-  // BLEService *pService = pServer->createService("8c7a056b-b542-4807-9c04-95631def9325");
+  BLEDevice::init("TEST_BLUETOOTH");
+  pServer = BLEDevice::createServer();
+  BLEService *pService = pServer->createService("8c7a056b-b542-4807-9c04-95631def9325");
 
-  // // Add characteristics to the service
-  // BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-  //     "8c7a056b-b542-4807-9c04-95631def9325",
-  //     BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE
-  // );
+  // Add characteristics to the service
+  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+      "8c7a056b-b542-4807-9c04-95631def9325",
+      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE
+  );
 
-  // // Add the characteristic to the service
-  // pService->addCharacteristic(pCharacteristic);
-
-  // // Start the service
-  // pService->start();
-
-  // // Start advertising
-  // BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  // pAdvertising->addServiceUUID(pService->getUUID());
-  // pAdvertising->start();
-
-  // Serial.println("Bluetooth is OFF.");
+  // Add the characteristic to the service
+  pService->addCharacteristic(pCharacteristic);
+  // Start the service
+  pService->start();
 }
 
 void loop() {
@@ -74,26 +68,19 @@ void loop() {
       command.replace("\n", "");
       Serial.println(command);
 
-       // Send back a message
+      // Send back a message
       if (command.equals("AT+BT=ON")) {
         Serial.println("Command valid");
-        // char* response = "BLEReceived";
-        // int l = uart_write_bytes(uart_num, response, strlen(response));
-        // Serial.println(l);
-        // if (commandReceived == 0) {
-        //   int l = uart_write_bytes(uart_num, response, strlen(response));
-        //   Serial.println(l);
-        // } 
-        // commandReceived = 1;
+        enableBluetooth();      
       }
-      // if (command == "AT+BT=ON") {
-      //   enableBluetooth();
-      // }
   }
 }
 
-// void enableBluetooth() {
-//   BLEDevice::startAdvertising();
-//   Serial.println("Bluetooth is ON.");
-// }
+void enableBluetooth() {
+  BLEDevice::startAdvertising();
+  Serial.println("Bluetooth is ON.");
+  pBLEScan = BLEDevice::getScan();
+  pBLEScan->setActiveScan(true);
+  pBLEScan->start(0);
+}
 
