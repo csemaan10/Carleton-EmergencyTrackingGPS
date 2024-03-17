@@ -77,14 +77,14 @@ void loop() {
        // Send back a message
       if (command.equals("AT+BT=ON")) {
         Serial.println("Command valid");
-        char* response = "BLEReceived";
-        int l = uart_write_bytes(uart_num, response, strlen(response));
-        Serial.println(l);
+        // char* response = "BLEReceived";
+        // int l = uart_write_bytes(uart_num, response, strlen(response));
+        // Serial.println(l);
         // if (commandReceived == 0) {
         //   int l = uart_write_bytes(uart_num, response, strlen(response));
         //   Serial.println(l);
         // } 
-        commandReceived = 1;
+        // commandReceived = 1;
       }
       // if (command == "AT+BT=ON") {
       //   enableBluetooth();
