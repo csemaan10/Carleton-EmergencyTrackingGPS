@@ -67,6 +67,8 @@ void MX_USB_HOST_Process(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#define MAX_BLE_RX_MESSAGE_LENGTH 11
+
 typedef enum
 {
   SLEEP       	= 0x00,
@@ -77,6 +79,7 @@ typedef enum
 
 char gpsBuffer[256];  // Buffer to store incoming GPS data
 TrackerModes mode = BLUETOOTH;
+
 
 void parseGPSData(char *data) {
 	// Buffer to store the sentence type (e.g., GPGGA)
@@ -104,7 +107,6 @@ void parseGPSData(char *data) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == UART4) {
-
     	if (huart->ErrorCode == HAL_UART_ERROR_ORE) {
 			printf("[ERROR] something went wrong\n");
 			__HAL_UART_CLEAR_OREFLAG(&huart4);
@@ -163,17 +165,9 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  if (mode == GPS) {
-	  HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1); // initalize the receive for the gps signal
-  } else if (mode == BLUETOOTH) {
-//	  char* message = "Hello\r\n";
-//	  if (HAL_UART_Transmit(&huart2, (uint8_t*) message, sizeof(message) - 1, HAL_MAX_DELAY) == HAL_OK) {
-//		  printf("Bluetooth Transmit okay! %s \n", message);
-//	  } else {
-//		  printf("Bluetooth transmit bad \n");
-//	  }
-  }
-
+  int bleStop = 0;
+  char* message = "AT+BT=ON\r\n";
+  uint8_t messageReceived[MAX_BLE_RX_MESSAGE_LENGTH];
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -184,14 +178,29 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
-    if (mode == BLUETOOTH) {
-		  char* message = "Hello\r\n";
-		  if (HAL_UART_Transmit(&huart2, "NewMessage\n", 35, HAL_MAX_DELAY) == HAL_OK) {
-			  printf("Bluetooth Transmit okay! %s \n", "NewMessage");
-		  } else {
-			  printf("Bluetooth transmit bad \n");
+    if (mode == GPS) {
+    	  HAL_UART_Receive_IT(&huart4, (uint8_t *)&huart4.Instance->RDR, 1); // initalize the receive for the gps signal
+    }else if (mode == BLUETOOTH) {
+		HAL_StatusTypeDef res = HAL_UART_Receive_IT(&huart2, (uint8_t *) messageReceived, MAX_BLE_RX_MESSAGE_LENGTH);
+		if (res == HAL_OK) {
+		  printf("Receive OK!! %s\n", messageReceived);
+		  if (strcmp((char *)messageReceived, "BLEReceived") == 0) {
+			printf("Receive compare OK!! %s \n", messageReceived);
+			bleStop = 1;
 		  }
-	  }
+		} else {
+			printf("[ERROR] something here went wrong! %d\n", res);
+		}
+
+		if (bleStop == 0) {
+			if (HAL_UART_Transmit(&huart2, (uint8_t *) message, strlen(message), HAL_MAX_DELAY) == HAL_OK) {
+			  printf("Bluetooth Transmit okay! %s \n", message);
+			} else {
+			  printf("Bluetooth transmit bad \n");
+			}
+		}
+    }
+
     HAL_Delay(3000);
   }
   /* USER CODE END 3 */
@@ -405,6 +414,7 @@ static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
