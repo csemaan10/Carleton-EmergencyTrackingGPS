@@ -59,7 +59,7 @@ void setup() {
       "8c7a056b-b542-4807-9c04-95631def9325",
       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE
   );
-
+  pCharacteristic->setValue("This is Tony's stuff");
   // Add the characteristic to the service
   pService->addCharacteristic(pCharacteristic);
 
@@ -90,16 +90,6 @@ void loop() {
         }
     }
   }
-  checkProximity();
-}
-
-void checkProximity() {
-  for (int i = 0; i < numDevices; i++) {
-      Serial.print("Phone detected: ");
-      Serial.print(devices[i].address);
-      Serial.print(", RSSI: ");
-      Serial.println(devices[i].rssi);
-  }
 }
 
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
@@ -112,6 +102,12 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
         std::string stdAddress = advertisedDevice.getAddress().toString();
         devices[numDevices].address = String(stdAddress.c_str()); // Convert std::string to String
         devices[numDevices].rssi = advertisedDevice.getRSSI();
+
+        Serial.print("Phone detected: ");
+        Serial.print(devices[numDevices].address);
+        Serial.print(", RSSI: ");
+        Serial.println(devices[numDevices].rssi);
+
         numDevices++;
         Serial.println(numDevices);
       }
