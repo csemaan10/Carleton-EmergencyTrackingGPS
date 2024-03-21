@@ -83,7 +83,7 @@ void loop() {
         Serial.println(command);
 
         // Send back a message
-        if (command.equals("AT+BT=ON")) {
+        if (command.startsWith("AT+BT=ON")) {
           Serial.println("Command valid");
           isBLEScan = 1;
           enableBluetooth();      
