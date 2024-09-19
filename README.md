@@ -15,10 +15,12 @@ Before development of the watch, the goal for this team was to develop the funct
 ## Folder Explanations
 
 - **EmergencyTrackerSystem**: this folder contains the implementation that embeds into the PCB, which has the functionality of the GPS and the bluetooth.
-- **IndividualModuleFunctionality/GPS**: this folder contains sample Arduino code to test the different modules individually.
+- **IndividualModuleFunctionality**: this folder contains sample Arduino code to test the different modules individually.
 - **designs**: This folder contains the design idea for both the hardware and software side of the things. it includes the mobile design using figma, and the schematics of the PCB.
 - **documents**: This folder includes generic documents for the overall project.
 - **mobile-app**: This folder includes the full functionality of the mobile app using TypeScript, Firebase and react-native with the expo framework. It allows users to login, register, view their loved ones locations, add new loved to caregive, set home locations for each loved one, and change settings.
+
+You can view the full overview of the project including how testing and development was performed, design decisions was made and more in the [full capstone report](https://github.com/Anthony-Massaad/Carleton-EmergencyTrackingGPS/blob/main/EmergencyTackingGPS_Capstone_Report.pdf)
 
 ## Credits
 - [Anthony Massaad](https://github.com/Anthony-Massaad)
